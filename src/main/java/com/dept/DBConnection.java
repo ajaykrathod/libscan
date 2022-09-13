@@ -59,7 +59,7 @@ public class DBConnection {
     public DBConnection() {
         try {
             pass = URLEncoder.encode("yourpassword",StandardCharsets.UTF_8.toString());
-            uri = "mongodb+srv://realmcluster:username"+pass +"@realmcluster.th5q0.mongodb.net/?retryWrites=true&w=majority";
+            uri = "uri";
         } catch (Exception e) {
             e.printStackTrace();
         }
