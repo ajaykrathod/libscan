@@ -1,9 +1,7 @@
-package com.dept.Student;
+package com.dept.student;
 
-import java.util.Arrays;
 import java.util.Vector;
 
-import com.dept.Books.Books;
 
 public class Student {
     private String prn;
@@ -11,22 +9,29 @@ public class Student {
     private String mail;
     private String roll;
     private boolean isIn;
-    private Vector<Books> books;
+    private Vector<String> books;
+
+    public Student(){
+        
+    }
     
     public Student(String prn) {
         this.prn = prn;
     }
 
-    public Student(String prn, String name, String mail,Vector<Books> books) {
+    public Student(String prn, String name, String mail,Vector<String> books,String roll) {
         this.prn = prn;
         this.name = name;
         this.mail = mail;
         this.books = books;
+        this.roll = roll;
+        this.isIn = false;
     }
     
     public String getPrn() {
         return prn;
     }
+
     public void setPrn(String prn) {
         this.prn = prn;
     }
@@ -54,7 +59,7 @@ public class Student {
 
     @Override
     public String toString() {
-        return "Student books=" + books.toString() + ", isIn=" + isIn + ", mail=" + mail + ", name=" + name
+        return "Student books=" + books + ", isIn=" + isIn + ", mail=" + mail + ", name=" + name
                 + ", prn=" + prn + ", roll=" + roll;
     }
 
@@ -66,11 +71,11 @@ public class Student {
         this.isIn = isIn;
     }
 
-    public Vector<Books> getBooks() {
+    public Vector<String> getBooks() {
         return books;
     }
 
-    public void setBooks(Vector<Books> books) {
+    public void setBooks(Vector<String> books) {
         this.books = books;
     }
 }

@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Vector;
 
+
 public class RetBorrow {
     private String prn;
     private Vector<String> isbn;
@@ -16,10 +17,13 @@ public class RetBorrow {
     DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
     
 
-    
-    public RetBorrow(String prn, String operation) {
+   
+    public RetBorrow() {
+    }
+
+    public RetBorrow(String prn, Vector<String> isbn, String operation) {
         this.prn = prn;
-        // this.isbn = isbn;
+        this.isbn = isbn;
         this.operation = operation;
         this.date = dateFormat.format(dt);
         this.time = timeFormat.format(dt);
@@ -58,6 +62,20 @@ public class RetBorrow {
         
         this.date = dateFormat.format(dt);
         this.time = timeFormat.format(dt);
+    }
+
+    public void setTime(String time){
+        this.time = time;
+    }
+
+    public void setDate(String date){
+        this.date = date;
+    }
+
+    @Override
+    public String toString() {
+        return "RetBorrow [date=" + date + ", isbn=" + isbn + ", operation=" + operation + ", prn=" + prn + ", time="
+                + time + "]";
     }
 
     

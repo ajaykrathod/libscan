@@ -12,7 +12,12 @@ public class InOut {
     DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
     Date dt = new Date();
     DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+
     
+    
+    public InOut() {
+    }
+
     public InOut(String prn, String operation) {
         this.prn = prn;
         this.operation = operation;
@@ -43,6 +48,10 @@ public class InOut {
         this.date = dateFormat.format(dt);
         this.time = timeFormat.format(dt);
     }
+    
+    public void setDate(String date){
+        this.date = date;
+    }
 
     public void setTime(String time) {
         this.time = time;
@@ -52,10 +61,9 @@ public class InOut {
         return time;
     }
 
-
     @Override
     public String toString() {
-        return "InOut [date=" + date + ", operation=" + operation + ", prn=" + prn + "]";
+        return "InOut [date=" + date + ", operation=" + operation + ", prn=" + prn + ", time=" + time + "]";
     }
 
 }

@@ -19,8 +19,7 @@ import com.dept.Books.Books;
 import com.dept.InOut.InOut;
 import com.dept.RetBorrow.RetBorrow;
 import com.dept.Staff.Staff;
-import com.dept.Student.Student;
-import com.mongodb.BasicDBObject;
+import com.dept.student.Student;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoDatabase;
@@ -58,8 +57,8 @@ public class DBConnection {
     // initialisation
     public DBConnection() {
         try {
-            pass = URLEncoder.encode("yourpassword",StandardCharsets.UTF_8.toString());
-            uri = "uri";
+            pass = URLEncoder.encode("password",StandardCharsets.UTF_8.toString());
+            uri = "mongodb+srv://username:"+pass +"@realmcluster.th5q0.mongodb.net/?retryWrites=true&w=majority";
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -75,38 +74,43 @@ public class DBConnection {
 
     // student database intitialisation
     void setUserDatabase(){
-        mongoDatabase = mongoClient.getDatabase("sample_mflix").withCodecRegistry(pojoCodecRegistry);
+        mongoDatabase = mongoClient.getDatabase("libscan").withCodecRegistry(pojoCodecRegistry);
 		studentCollection = mongoDatabase.getCollection("student",Student.class);
     }
 
     // book database intitialisation
     void setBooksDatabase(){
-        mongoDatabase = mongoClient.getDatabase("sample_mflix").withCodecRegistry(pojoCodecRegistry);
+        mongoDatabase = mongoClient.getDatabase("libscan").withCodecRegistry(pojoCodecRegistry);
 		booksCollection = mongoDatabase.getCollection("book",Books.class);
     }
 
     // staff database intitialisation
     void setStaffDatabase(){
-        mongoDatabase = mongoClient.getDatabase("sample_mflix").withCodecRegistry(pojoCodecRegistry);
+        mongoDatabase = mongoClient.getDatabase("libscan").withCodecRegistry(pojoCodecRegistry);
 		staffCollection = mongoDatabase.getCollection("staff",Staff.class);
     }
 
     // staff database intitialisation
     void setInOutDatabase(){
-        mongoDatabase = mongoClient.getDatabase("sample_mflix").withCodecRegistry(pojoCodecRegistry);
+        mongoDatabase = mongoClient.getDatabase("libscan").withCodecRegistry(pojoCodecRegistry);
 		inoutCollection = mongoDatabase.getCollection("inout",InOut.class);
     }
 
     // staff database intitialisation
     void setRetBorrowDatabase(){
-        mongoDatabase = mongoClient.getDatabase("sample_mflix").withCodecRegistry(pojoCodecRegistry);
+        mongoDatabase = mongoClient.getDatabase("libscan").withCodecRegistry(pojoCodecRegistry);
 		retborrowCollection = mongoDatabase.getCollection("retborrow",RetBorrow.class);
     }
     
-    // student database opration
+    // student database operation
     String addStudent(Student user){
-        InsertOneResult insertOneResult = studentCollection.insertOne(user);
-		return insertOneResult.getInsertedId().toString();
+        if(isStudentExists(user)){
+            return "User Already Exists";
+        }
+        else{
+            InsertOneResult insertOneResult = studentCollection.insertOne(user);
+            return insertOneResult.getInsertedId().toString();
+        }
     }
 
     boolean deleteStudent(Student student){
@@ -115,12 +119,37 @@ public class DBConnection {
     }
 
     public Long updateStudent(Student student) {
-		UpdateResult updateResult = studentCollection.updateOne(Filters.eq("prn",student.getPrn()), Updates.push("name", student.getName()));
+		UpdateResult updateResult = studentCollection.updateOne(
+            Filters.eq("prn",student.getPrn()),
+            Updates.combine(
+                Updates.set("name", student.getName()),
+                Updates.set("books", student.getBooks()),
+                Updates.set("mail", student.getMail()),
+                Updates.set("isIn", student.isIn())
+            )
+        );
 		return updateResult.getModifiedCount();
 	}
 
+    boolean isStudentExists(Student student){
+        if(studentCollection.find(Filters.eq("prn",student.getPrn())).first() != null){
+            return true;
+        }
+        return false;
+    }
+
+
     public void getStudent(Student student) {
         FindIterable<Student> findIterable = studentCollection.find(Filters.eq("prn",student.getPrn()));
+		MongoCursor<Student> cursor = findIterable.cursor();
+	    while(cursor.hasNext()){
+			Student stud = cursor.next();
+			System.out.println(stud.toString());
+		}
+    }
+
+    public void getAllStudents(){
+        FindIterable<Student> findIterable = studentCollection.find();
 		MongoCursor<Student> cursor = findIterable.cursor();
 	    while(cursor.hasNext()){
 			Student stud = cursor.next();
@@ -140,12 +169,28 @@ public class DBConnection {
     }
 
     public Long updateBook(Books books) {
-		UpdateResult updateResult = booksCollection.updateOne(Filters.eq("isbn",books.getIsbn()), Updates.push("name", books.getName()));
+		UpdateResult updateResult = booksCollection.updateOne(
+            Filters.eq("isbn",books.getIsbn()),
+            Updates.combine(
+                Updates.set("name", books.getName()),
+                Updates.set("name", books.getAuthor())
+            )
+        );
 		return updateResult.getModifiedCount();
 	}
 
-    public void getBook(Books books) {
-        FindIterable<Books> findIterable = booksCollection.find(Filters.eq("isbn",books.getIsbn()));
+    public Books getBook(Books books) {
+        return booksCollection.find(Filters.eq("isbn",books.getIsbn())).first();
+        // FindIterable<Books> findIterable = booksCollection.find(Filters.eq("isbn",books.getIsbn()));
+		// MongoCursor<Books> cursor = findIterable.cursor();
+	    // while(cursor.hasNext()){
+		// 	Books book = cursor.next();
+		// 	System.out.println(book.toString());
+		// }
+    }
+
+    public void getAllBooks() {
+        FindIterable<Books> findIterable = booksCollection.find();
 		MongoCursor<Books> cursor = findIterable.cursor();
 	    while(cursor.hasNext()){
 			Books book = cursor.next();
@@ -180,18 +225,13 @@ public class DBConnection {
 
     // inout database operation
     boolean isIn(Student student){
-        if(student.isIn()) return true;
-        return false;
+        if(student.isIn() == true) return true;
+        else return false;
     }
 
     void decideInOut(Student student){
-        BasicDBObject basicDBObject = new BasicDBObject();
-        basicDBObject.append("prn", student.getPrn());
-        FindIterable<Student> findIterable = studentCollection.find(basicDBObject);
-		MongoCursor<Student> cursor = findIterable.cursor();
-	    while(cursor.hasNext()){
-			Student stud = cursor.next();
-            if(isIn(stud)){
+        Student stud = studentCollection.find(Filters.eq("prn", student.getPrn())).first();
+            if(isIn(stud) == true){
                 stud.setIn(false);
                 InOut inOut = new InOut(stud.getPrn(), "out");
                 insertInOut(inOut);
@@ -202,9 +242,17 @@ public class DBConnection {
                 insertInOut(inOut);
             }
             updateStudent(stud);
-		}
-        
     }
+
+    void getStudentInOutRecord(Student student){
+        FindIterable<InOut> findIterable = inoutCollection.find(Filters.eq("prn",student.getPrn()));
+		MongoCursor<InOut> cursor = findIterable.cursor();
+	    while(cursor.hasNext()){
+			InOut inOut = cursor.next();
+			System.out.println(inOut.toString());
+		}
+    }
+
     void setOutTime(Student student){
         InOut inOut = new InOut(student.getPrn(), "out");
         inOut.setTime("18:00:00");
@@ -212,9 +260,7 @@ public class DBConnection {
     }
 
     void setAllOut(){
-        BasicDBObject basicDBObject = new BasicDBObject();
-        basicDBObject.append("isIn", true);
-        FindIterable<Student> findIterable = studentCollection.find(basicDBObject);
+        FindIterable<Student> findIterable = studentCollection.find(Filters.eq("isIn", true));
 		MongoCursor<Student> cursor = findIterable.cursor();
 	    while(cursor.hasNext()){
 			Student stud = cursor.next();
@@ -230,42 +276,46 @@ public class DBConnection {
     }
 
     // retborrow database operation
- 
-
     void decideRetBorrow(Student student,Books book){
-        BasicDBObject basicDBObject = new BasicDBObject();
-        basicDBObject.append("prn", student.getPrn());
-        FindIterable<Student> findIterable = studentCollection.find(basicDBObject);
-		MongoCursor<Student> cursor = findIterable.cursor();
-	    while(cursor.hasNext()){
-			Student stud = cursor.next();
-            Vector<Books> books = stud.getBooks();
+        Student stud = studentCollection.find(Filters.eq("prn", student.getPrn())).first();
+            Vector<String> books = stud.getBooks();
             if(isBorrowed(stud, book)){
                 books.remove((Object)book.getIsbn());
-                RetBorrow retBorrow = new RetBorrow(stud.getPrn(), "return");
+
+                RetBorrow retBorrow = new RetBorrow(stud.getPrn(),books,"return");
                 insertRetBorrow(retBorrow);
             }
             else {
-                RetBorrow retBorrow = new RetBorrow(stud.getPrn(), "borrow");
-                books.add(book);
+                RetBorrow retBorrow = new RetBorrow(stud.getPrn(),books, "borrow");
+                books.add(book.getIsbn());
                 insertRetBorrow(retBorrow);
             }
             stud.setBooks(books);
-            updateStudent(stud);            
-		}
+            updateStudent(stud);
     }
 
     public boolean isBorrowed(Student student,Books book){
-        Vector<Books> books = student.getBooks();
-        if(books.contains((Object)book.getIsbn())){
+        Vector<String> books = student.getBooks();
+        if(books.contains(book.getIsbn())){
+            System.out.println(books.contains(book.getIsbn()));
             return true;
         }
-        return false;
+        else {
+            System.out.println("Not Present");
+            return false;
+        }
     }
 
     void insertRetBorrow(RetBorrow retBorrow){
         InsertOneResult insertOneResult = retborrowCollection.insertOne(retBorrow);
     }
 
-    
+    void getStudentRetBorrowRecord(Student student){
+        FindIterable<RetBorrow> findIterable = retborrowCollection.find(Filters.eq("prn",student.getPrn()));
+		MongoCursor<RetBorrow> cursor = findIterable.cursor();
+	    while(cursor.hasNext()){
+			RetBorrow retBorrow = cursor.next();
+			System.out.println(retBorrow.toString());
+		}
+    }
 }
